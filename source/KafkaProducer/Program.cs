@@ -80,27 +80,27 @@ namespace KafkaProducer
 		/// <param name="client"></param>
 		/// <param name="cfg"></param>
 		static void OAuthTokenRefreshCallback(IClient client, string cfg)
-		{	
-			//principal could be null for Kafka OAUth 2 auth
-			string principal = null;
-						
-			string token = "";			
-			long expire = 0;
+		{
+            try
+            {
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new DefaultAzureCredentialOptions();
+                DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredential(defaultAzureCredentialOptions);
 
-			DefaultAzureCredentialOptions defaultAzureCredentialOptions = new DefaultAzureCredentialOptions();			
-			DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredential(defaultAzureCredentialOptions);
-						
-			TokenRequestContext tokenRequestContext = new TokenRequestContext(new string[] {  $"https://{eventHubNamespace}.servicebus.windows.net/.default" });   
+                var tokenRequestContext = new TokenRequestContext(new string[] { $"https://{eventHubNamespace}.servicebus.windows.net/.default" });
 
-			var accessToken = defaultAzureCredential.GetToken(tokenRequestContext);
+                var accessToken = defaultAzureCredential.GetToken(tokenRequestContext);
 
 
-			token = accessToken.Token;
-			expire = accessToken.ExpiresOn.ToUnixTimeMilliseconds();
-				
-			client.OAuthBearerSetToken(token, expire, principal);
+                var token = accessToken.Token;
+                var expire = accessToken.ExpiresOn.ToUnixTimeMilliseconds();
 
-			//client.OAuthBearerSetTokenFailure(errorMessage);
+                //principal could be null for Kafka OAuth 2.0 auth
+                client.OAuthBearerSetToken(token, expire, null);
+            }
+            catch (Exception ex)
+            {
+				client.OAuthBearerSetTokenFailure(ex.ToString());
+			}
 		}
 
 
